@@ -34,6 +34,8 @@ La combinación de estos elementos ofrece al conductor una herramienta valiosa p
 evitando colisiones con obstáculos.
 
 
-
-
+--Como utilizar la simulacion:
+Los potenciometros hacen de simulador de distancia , cuando estan bajos activan la alarma
+si no funcionan los sensores o manda error hay que cambiar la libreria de estos por la que esta dentro de la carpeta de Proteus.
+apenas inicies la simulacion va a mostrar imamgen en la pantalla LCD
 
