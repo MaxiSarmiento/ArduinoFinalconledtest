@@ -1,26 +1,26 @@
 #include <DFRobot_RGBLCD1602.h>
 #include <Ultrasonic.h>
 
-
+// Pines de Sensores y configuracion inicial LCD
 Ultrasonic SensorUltrasonico1(2, 3);   
 Ultrasonic SensorUltrasonico2(11,10); 
 DFRobot_RGBLCD1602 lcd(0x27, 16, 2);
-
+// Definiciones de los parametros y Constantes
 #define BUZZER               9
 #define FREQUENCIA          800
 #define CONFIGURAR_BUZZER    pinMode(BUZZER, OUTPUT)
 #define PRENDER_BUZZER       tone(BUZZER, FREQUENCIA)
 #define APAGAR_BUZZER        noTone(BUZZER)
-
+//Definicion de leds
 #define LED1                 4
 #define CONFIGURAR_LED1      pinMode(LED1, OUTPUT)
 
 #define LED2                 12
 #define CONFIGURAR_LED2      pinMode(LED2, OUTPUT)
-
+//Definicion lecturas de distancia
 #define DISTANCIA1           SensorUltrasonico1.read()
 #define DISTANCIA2           SensorUltrasonico2.read()
-
+//Constante Distancia Limite
 #define DISTANCIA_LIMITE    20
 
 //-- definicion LedTest
@@ -31,7 +31,7 @@ DFRobot_RGBLCD1602 lcd(0x27, 16, 2);
 
 
 
-
+//Definiciones auxiliares
 bool pantallaLimpia = false;
 bool mostrarAlarma = false;
 bool mostrarDistancia = true;
@@ -85,7 +85,8 @@ void LedTest() {
   ACTUALIZAR_LED_TEST(ledState);
 }
 //----------------------------- MEDIMOS LA DISTANCIA DE LOS SENSORES 1 Y 2 -------------------------
-
+//Medimos la distancia entre el sensor utilizando la funcion de la libreria, diferenciando ambos sensores y establecemos 
+//la velocidad de parpadeo de los leds y en el caso de cercania el activar o desactivar el buzzer
 void medirDistanciaSensor1(){
   
   int frequenciaBuzzer = map(DISTANCIA1, 0, DISTANCIA_LIMITE, 800, 1000);
@@ -134,7 +135,8 @@ void medirDistanciaSensor2(){
 
 
 //------------------------------ VERIFICAMOS LA DISTANCIA DE LOS SENSORES -------------------------------
-
+//Establece que si la distancia de uno u otro sensor es menor o igual a la distancia limite establecida , que se active la alarma
+//que es que vacie la pantalla y muestre un mensaje de alerta, aparte de al activarla empieza a sonar el buzzer
 void verificarDistanciaSensores(){
   
   if (DISTANCIA1 <= DISTANCIA_LIMITE || DISTANCIA2 <= DISTANCIA_LIMITE) {
@@ -186,7 +188,7 @@ void verificarDistanciaSensores(){
 
 
 //------------------- CONTROLAMOS LOS PARPADEOS DE LOS LED DE ATRAS Y ADELANTE  -------------------------
-
+// Funcion que controla el intervalo y el brillo de los leds, en base a la distancia que entrega el sensor
 void parpadeoLEDs(int led1, int brillo, int intervalo, int distancia) {
   
   static unsigned long previousMillis = 0;
