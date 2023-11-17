@@ -197,6 +197,7 @@ void parpadeoLEDs(int led1, int brillo, int intervalo, int distancia) {
 
   if (currentMillis - previousMillis >= intervalo) {
     previousMillis = currentMillis;
+    //ledState = !ledState;
     if (ledState == LOW) {
       ledState = HIGH;
     } else {
@@ -206,7 +207,9 @@ void parpadeoLEDs(int led1, int brillo, int intervalo, int distancia) {
 
   if (distancia == 0) {
     digitalWrite(led1, HIGH);
+    //ENCENDER_LUZ_TRASERA;
   } else {
+    //INTENSIDAD_LUZ_TRASERA(brillo * ledState);
     analogWrite(led1, brillo * ledState);
   }
 }
@@ -232,4 +235,3 @@ void parpadeoLEDs2(int led2, int brillo, int intervalo, int distancia) {
     analogWrite(led2, brillo * ledState);
   }
 }
-
