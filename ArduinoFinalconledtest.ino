@@ -7,25 +7,27 @@ Ultrasonic SENSOR_ULTRASONICO_TRASERO(11, 10);
 DFRobot_RGBLCD1602 lcd(0x27, 16, 2);
 
 // Definiciones de los parametros del buzzer
-#define BUZZER               9
-#define FREQUENCIA            800
-#define CONFIGURAR_BUZZER     pinMode(BUZZER, OUTPUT)
-#define PRENDER_BUZZER        tone(BUZZER, FREQUENCIA)
-#define APAGAR_BUZZER         noTone(BUZZER)
+#define BUZZER_PIN        9
+#define FREQUENCIA         800
+#define CONFIGURAR_BUZZER  pinMode(BUZZER_PIN, OUTPUT)
+#define PRENDER_BUZZER     tone(BUZZER_PIN, FREQUENCIA)
+#define APAGAR_BUZZER      noTone(BUZZER_PIN)
 
 // Definiciones de los Led´s delanteros y traseros
-#define LED_DELANTERO               4
-#define CONFIGURAR_LED_DELANTERO    pinMode(LED_DELANTERO, OUTPUT)
+#define LED_DELANTERO_PIN        4
+#define CONFIGURAR_LED_DELANTERO pinMode(LED_DELANTERO_PIN, OUTPUT)
+#define PRENDER_LED_DELANTERO    digitalWrite(LED_DELANTERO_PIN, HIGH)
 
-#define LED_TRASERO                 12
-#define CONFIGURAR_LED_TRASERO      pinMode(LED_TRASERO, OUTPUT)
+#define LED_TRASERO_PIN          12
+#define CONFIGURAR_LED_TRASERO   pinMode(LED_TRASERO_PIN, OUTPUT)
+#define PRENDER_LED_TRASERO      digitalWrite(LED_TRASERO_PIN, HIGH)
 
 // Definiciones de la lectura de distancia de los sensores
-#define DISTANCIA_DELANTERA           SENSOR_ULTRASONICO_DELANTERO.read()
-#define DISTANCIA_TRASERA             SENSOR_ULTRASONICO_TRASERO.read()
+#define DISTANCIA_DELANTERA     SENSOR_ULTRASONICO_DELANTERO.read()
+#define DISTANCIA_TRASERA       SENSOR_ULTRASONICO_TRASERO.read()
 
 // Definicion sobre la distancia limite de los sensores
-#define DISTANCIA_LIMITE    20
+#define DISTANCIA_LIMITE        20
 
 // Definciones del LedTest
 #define MS_INTERVALO_LED_TEST   250 //Function LedTest()
@@ -61,6 +63,10 @@ void setup() {
 void loop() {
   LedTest();
   medirDistanciaSensoresUltrasonicos();
+  controlarBuzzers();
+  actualizarLCD(DISTANCIA_DELANTERA);
+  actualizarLCD(DISTANCIA_TRASERA);
+  valoresLeds();
 }
 
 //-----------------------------------------------------
@@ -81,76 +87,91 @@ void LedTest() {
 void medirDistanciaSensoresUltrasonicos() {
   unsigned long currentTime = millis();
 
-  if (currentTime - tiempoActualizacion >= intervalo) {
+  if (currentTime - tiempoActualizacion >= intervalo) return;
+  else
     medirDistanciaSensor1();
     medirDistanciaSensor2();
     verificarDistanciaSensores();
     tiempoActualizacion = currentTime;
-  }
 }
 
 //-----------------------------------------------------
 
-//----------------------------- MEDIMOS LA DISTANCIA DE LOS SENSORES 1 Y 2 -------------------------
-
-/* 
- *  En estas funciones medimos la distancia de ambos sensores utilizando la función de la librería, y ajustamos la velocidad de parpadeo de los LEDs,
- *  donde en el caso de que los sensores detecten una proximidad, activamos o desactivamos el buzzer.
-*/
-
-void medirDistanciaSensor1() {
+void valoresLeds() {
   
-  int frequenciaBuzzer = map(DISTANCIA_DELANTERA, 0, DISTANCIA_LIMITE, 800, 1000);
-  int valorPWM = map(DISTANCIA_DELANTERA, 0, DISTANCIA_LIMITE, 255, 0);
-  int mapearIntervalo = map(DISTANCIA_DELANTERA, 0, DISTANCIA_LIMITE, 255, 100);
-  parpadeoLedDelanteros(LED_DELANTERO, valorPWM, mapearIntervalo, DISTANCIA_DELANTERA);
+  int ledDelantero = LED_DELANTERO_PIN;
+  int brilloLedDelantero = 255;
+  int intervaloDelantero = 500;
+  int distanciaDelantera = 1;
 
+ 
+  int ledTrasero = LED_TRASERO_PIN;
+  int brilloLedTrasero = 255;
+  int intervaloTrasero = 500;
+  int distanciaTrasera = 1;
+
+  
+  parpadeoLedDelanteros(ledDelantero, brilloLedDelantero, intervaloDelantero, distanciaDelantera);
+  parpadeoLedTraseros(ledTrasero, brilloLedTrasero, intervaloTrasero, distanciaTrasera);
+}
+
+void actualizarLCD(int valorDistancia) {
   lcd.setCursor(12, 0);
   lcd.print("   ");
 
   if (mostrarDistancia) {
     lcd.setCursor(12, 0);
-    lcd.print(DISTANCIA_DELANTERA);
+    lcd.print(valorDistancia);
   }
-  if (DISTANCIA_DELANTERA == 0) PRENDER_BUZZER;
-  else APAGAR_BUZZER;
+}
 
+void controlarBuzzers() {
+  unsigned long currentTime = millis();
+
+  if (currentTime - tiempoActualizacion >= intervalo) return;
+  else
+    controlarBuzzerDelantero(DISTANCIA_DELANTERA, BUZZER_PIN);
+    controlarBuzzerTrasero(DISTANCIA_TRASERA, BUZZER_PIN);
+    tiempoActualizacion = currentTime;
+}
+
+//-----------------------------------------------------
+
+void controlarBuzzerDelantero(int distancia, int buzzerPin) {
+  digitalWrite(buzzerPin, distancia == 0 ? HIGH : LOW);
+}
+
+void controlarBuzzerTrasero(int distancia, int buzzerPin) {
+  digitalWrite(buzzerPin, distancia == 0 ? HIGH : LOW);
+}
+
+//-----------------------------------------------------
+
+void medirDistanciaSensores(int distancia, int ledPin, int buzzerPin) {
+  int frequenciaBuzzer = map(distancia, 0, DISTANCIA_LIMITE, 800, 1000);
+  int valorPWM = map(distancia, 0, DISTANCIA_LIMITE, 255, 0);
+  int mapearIntervalo = map(distancia, 0, DISTANCIA_LIMITE, 255, 100);
+
+  parpadeoLed(ledPin, valorPWM, mapearIntervalo, distancia);
+  actualizarLCD(distancia);
+}
+
+//-----------------------------------------------------
+
+void medirDistanciaSensor1() {
+  medirDistanciaSensores(DISTANCIA_DELANTERA, LED_DELANTERO_PIN, BUZZER_PIN);
 }
 
 void medirDistanciaSensor2() {
-  
-  int frequenciaBuzzer = map(DISTANCIA_TRASERA, 0, DISTANCIA_LIMITE, 800, 1000);
-  int valorPWM = map(DISTANCIA_TRASERA, 0, DISTANCIA_LIMITE, 255, 0);
-  int mapearIntervalo = map(DISTANCIA_TRASERA, 0, DISTANCIA_LIMITE, 255, 100);
-  parpadeoLedTraseros(LED_TRASERO, valorPWM, mapearIntervalo, DISTANCIA_TRASERA);
-
-  lcd.setCursor(12, 0);
-  lcd.print("   ");
-
-  if (mostrarDistancia) {
-    lcd.setCursor(12, 0);
-    lcd.print(DISTANCIA_TRASERA);
-  }
-
-  if (DISTANCIA_TRASERA == 0) PRENDER_BUZZER;
-  else APAGAR_BUZZER;
-  
+  medirDistanciaSensores(DISTANCIA_TRASERA, LED_TRASERO_PIN, BUZZER_PIN);
 }
-//-------------------------------------------------------------------------------------------------------
 
-//------------------------------ VERIFICAMOS LA DISTANCIA DE LOS SENSORES -------------------------------
-
-/* 
- *  Esta funcion se va encargar de activar la alarma si la distancia de uno de los sensores es menor que la distancia límite,
- *  donde si se sobre pasa la distancia limite la alarma va vacíar la pantalla y muestra un mensaje de alerta, además de iniciar el sonido del buzzer.
-*/
+//-----------------------------------------------------
 
 void verificarDistanciaSensores() {
-  
-  if (DISTANCIA_DELANTERA <= DISTANCIA_LIMITE || DISTANCIA_TRASERA <= DISTANCIA_LIMITE) 
-  alarmaActiva = true;
+  if (DISTANCIA_DELANTERA <= DISTANCIA_LIMITE || DISTANCIA_TRASERA <= DISTANCIA_LIMITE)alarmaActiva = true;
   else alarmaActiva = false;
-
+  
   if (!pantallaLimpia) {
     lcd.clear();
     pantallaLimpia = true;
@@ -185,44 +206,27 @@ void verificarDistanciaSensores() {
     mostrarDistancia = false;
     PRENDER_BUZZER;
   }
-  
 }
 
-//-------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------
 
-//------------------- CONTROLAMOS LOS PARPADEOS DE LOS LED DE ATRAS Y ADELANTE  -------------------------
-
-// En esta funcion controlamos el intervalo de parpadeo de los LEDs según la distancia que esta siendo medida por el sensor.
-
-void parpadeoLedDelanteros(int ledDelantero, int brilloLed, int intervalo, int distanciaDelantera) {
+void parpadeoLed(int led, int brillo, int intervalo, int distancia) {
   
   static unsigned long previousMillis = 0;
   static bool ledState = LOW;
   unsigned long currentMillis = millis();
 
-  if (currentMillis - previousMillis >= intervalo) {
-    previousMillis = currentMillis;
-    if (ledState == LOW) ledState = HIGH;
-    else ledState = LOW;
-  }
+  if (currentMillis - previousMillis < intervalo) return;
+  previousMillis = currentMillis;
+  ledState = !ledState;
 
-  if (distanciaDelantera == 0) digitalWrite(ledDelantero, HIGH);
-  else analogWrite(ledDelantero, brilloLed * ledState);
-  
+  distancia == 0 ? (PRENDER_LED_DELANTERO, PRENDER_LED_TRASERO) : analogWrite(led, brillo * ledState);
+}
+
+void parpadeoLedDelanteros(int ledDelantero, int brilloLed, int intervalo, int distanciaDelantera) {
+  parpadeoLed(ledDelantero, brilloLed, intervalo, distanciaDelantera);
 }
 
 void parpadeoLedTraseros(int ledTrasero, int brilloLed, int intervalo, int distanciaTrasera) {
-  
-  static unsigned long previousMillis = 0;
-  static bool ledState = LOW;
-  unsigned long currentMillis = millis();
-
-  if (currentMillis - previousMillis >= intervalo) {
-    previousMillis = currentMillis;
-    if (ledState == LOW) ledState = HIGH;
-    else ledState = LOW;
-  }
-
-  if (distanciaTrasera == 0) digitalWrite(ledTrasero, HIGH);
-  else analogWrite(ledTrasero, brilloLed * ledState);
+  parpadeoLed(ledTrasero, brilloLed, intervalo, distanciaTrasera);
 }
